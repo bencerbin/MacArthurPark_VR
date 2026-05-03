@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>VR Walkthrough</title>
+      <link rel="stylesheet" href="css/ui.css">
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/aframe-environment-component@1.3.4/dist/aframe-environment-component.min.js"></script>
+    <script src="https://unpkg.com/aframe-extras@7.0.0/dist/aframe-extras.min.js"></script>
+    
+    <script>
+AFRAME.registerComponent('click-debug', {
+  init: function () {
+    this.el.addEventListener('model-loaded', () => {
+      console.log('✅ MODEL LOADED:', this.el.id);
+    });
+
+    this.el.addEventListener('mouseenter', () => {
+      console.log('👀 HOVER START:', this.el.id);
+    });
+
+    this.el.addEventListener('mouseleave', () => {
+      console.log('👋 HOVER END:', this.el.id);
+    });
+
+    this.el.addEventListener('click', () => {
+      console.log('🔥 CLICK REGISTERED ON:', this.el.id);
+
+      const panel = document.querySelector('#infoPanel');
+      const visible = panel.getAttribute('visible');
+      panel.setAttribute('visible', !visible);
+    });
+  }
+});
+</script>
+
+<script>
+const isFirefox = navigator.userAgent.toLowerCase().includes('firefox');
+
+window.addEventListener('DOMContentLoaded', () => {
+  const startBtn = document.querySelector('#startButton');
+  const startScreen = document.querySelector('#startScreen');
+  const scene = document.querySelector('a-scene');
+  const cam = document.querySelector('#mainCamera');
+
+  startBtn.addEventListener('click', () => {
+    console.log('🚀 Starting experience');
+
+    startScreen.style.display = 'none';
+    
+
+    if (isFirefox) {
+      console.log('🦊 Firefox → drag to look');
+
+      cam.setAttribute('look-controls', 'pointerLockEnabled: false');
+
+    } else {
+      console.log('🌐 Chrome → pointer lock ON');
+
+      cam.setAttribute('look-controls', 'pointerLockEnabled: true');
+    }
+
+    // IMPORTANT: click once more after this to activate pointer lock
+  });
+});
+</script>
+
+
+
+
+  </head>
+
+  <body>
+
+    <div id="startScreen" style="
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #111;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  z-index: 9999;
+  font-family: sans-serif;
+">
+
+  <h1>VR Walkthrough</h1>
+  <p>Click to start</p>
+
+  <button id="startButton" style="
+    padding: 12px 24px;
+    font-size: 18px;
+    cursor: pointer;
+  ">
+    Enter Experience
+  </button>
+
+</div>
+
+  <a-scene background="color: #87CEEB" visible="false" >
+
+    <!-- Assets -->
+    <a-assets>
+      <a-asset-item id="model" src="test15.glb"></a-asset-item>
+      <a-asset-item id="model2" src="playground.glb"></a-asset-item>
+    </a-assets>
+
+    <!-- Far model (irrelevant for interaction) -->
+    <a-entity 
+      gltf-model="#model"
+      position="-200 0 0" 
+      scale="2 2 2">
+    </a-entity>
+
+    <!-- Move playground CLOSE so raycasting works -->
+    <a-entity 
+      id="playground"
+      gltf-model="#model2"
+      position="0 0 -10"
+      scale="2 2 2">
+    </a-entity>
+
+    <!-- GUARANTEED clickable collider -->
+    <a-box 
+      id="playgroundCollider"
+      position="0 1 -10"
+      width="20"
+      height="20"
+      depth="20"
+      opacity="0"
+      class="clickable"
+      click-debug>
+    </a-box>
+
+    <!-- UI Panel -->
+    <a-entity id="infoPanel"
+              position="5 1.5 5"
+              visible="false">
+      <a-plane width="10" height="10" color="#222"></a-plane>
+      <a-text value="Playground Area\nClick again to close"
+              position="-3 3 0.01"
+              width="2"
+              >
+      </a-text>
+    </a-entity>
+
+    <!-- PLAYER (this is the big fix) -->
+    <a-entity id="rig"
+              movement-controls="controls: keyboard, gamepad, touch"
+              position="0 0 0">
+
+      <a-entity position="0 1.6 0">
+
+        <a-camera id="mainCamera"
+          look-controls
+          wasd-controls
+          rotation="0 0 0">
+  
+      <a-cursor raycaster="objects: .clickable; recursive: true"></a-cursor>
+
+      </a-camera>
+
+      </a-entity>
+
+    </a-entity>
+
+    <!-- Lighting -->
+    <a-light type="ambient" intensity="1"></a-light>
+
+    <!-- Ground -->
+    <a-plane rotation="-90 0 0" width="500" height="500" color="#7BC8A4"></a-plane>
+
+  </a-scene>
+</body>
+</html>
+
+
