@@ -35,6 +35,9 @@ AFRAME.registerComponent('click-debug', {
 </script>
 
 <script>
+navigator.xr.isSessionSupported('immersive-vr').then(console.log);
+console.log('XR supported:', navigator.xr);
+
 const isFirefox = navigator.userAgent.toLowerCase().includes('firefox');
 
 window.addEventListener('DOMContentLoaded', () => {
@@ -48,22 +51,48 @@ window.addEventListener('DOMContentLoaded', () => {
 
     startScreen.style.display = 'none';
 
-    scene.setAttribute('visible', true);
-    
 
+   if (!AFRAME.utils.device.checkHeadsetConnected()) {
     if (isFirefox) {
       console.log('🦊 Firefox → drag to look');
 
       cam.setAttribute('look-controls', 'pointerLockEnabled: false');
-
     } else {
       console.log('🌐 Chrome → pointer lock ON');
 
       cam.setAttribute('look-controls', 'pointerLockEnabled: true');
     }
 
-    // IMPORTANT: click once more after this to activate pointer lock
-  });
+    if (!isFirefox && scene.canvas && scene.canvas.requestPointerLock) {
+      scene.canvas.requestPointerLock();
+    }
+  }
+  else {
+     scene.enterVR();
+  }
+
+
+});
+
+  /**
+   * 
+   * startBtn.addEventListener('click', () => {
+  startScreen.style.display = 'none';
+
+  // Desktop behavior
+  if (!AFRAME.utils.device.checkHeadsetConnected()) {
+    if (!isFirefox && scene.canvas?.requestPointerLock) {
+      scene.canvas.requestPointerLock();
+    }
+  } else {
+    // Enter VR if headset is present
+    scene.enterVR();
+  }
+});
+   * 
+   * */
+
+
 });
 </script>
 
@@ -103,12 +132,15 @@ window.addEventListener('DOMContentLoaded', () => {
 
 </div>
 
-  <a-scene background="color: #87CEEB" visible="false" >
+  <a-scene background="color: #87CEEB"
+   vr-mode-ui="enabled: true"
+  renderer="antialias: true" >
 
     <!-- Assets -->
     <a-assets>
-      <a-asset-item id="model" src="test15.glb"></a-asset-item>
+      <a-asset-item id="model" src="test19.glb"></a-asset-item>
       <a-asset-item id="model2" src="playground.glb"></a-asset-item>
+      <a-asset-item id="walkway" src="MacVR_walkway.glb"></a-asset-item>
     </a-assets>
 
     <!-- Far model (irrelevant for interaction) -->
@@ -125,6 +157,14 @@ window.addEventListener('DOMContentLoaded', () => {
       position="0 0 -10"
       scale="2 2 2">
     </a-entity>
+
+    <a-entity 
+      gltf-model="#walkway"
+      position="-200 0 0" 
+      scale="2 2 2">
+    </a-entity>
+
+  
 
     <!-- GUARANTEED clickable collider -->
     <a-box 
@@ -150,25 +190,38 @@ window.addEventListener('DOMContentLoaded', () => {
       </a-text>
     </a-entity>
 
+
+
     <!-- PLAYER (this is the big fix) -->
     <a-entity id="rig"
-              movement-controls="controls: keyboard, gamepad, touch"
-              position="0 0 0">
+          movement-controls="controls: keyboard, gamepad, touch"
+          position="0 0 0">
 
-      <a-entity position="0 1.6 0">
+  <a-camera id="mainCamera"
+            position="0 5.6 0"
+            look-controls="pointerLockEnabled: true"
+            wasd-controls>
 
-        <a-camera id="mainCamera"
-          look-controls
-          wasd-controls
-          rotation="0 0 0">
-  
-      <a-cursor raycaster="objects: .clickable; recursive: true"></a-cursor>
+    <a-cursor
+      raycaster="objects: .clickable; recursive: true"
+      fuse="false"
+      visible="true">
+    </a-cursor>
 
-      </a-camera>
+  </a-camera>
 
-      </a-entity>
+  <!-- Controllers INSIDE rig -->
+  <a-entity
+    laser-controls="hand: left"
+    raycaster="objects: .clickable; recursive: true">
+  </a-entity>
 
-    </a-entity>
+  <a-entity
+    laser-controls="hand: right"
+    raycaster="objects: .clickable; recursive: true">
+  </a-entity>
+
+</a-entity>
 
     <!-- Lighting -->
     <a-light type="ambient" intensity="1"></a-light>
@@ -176,8 +229,8 @@ window.addEventListener('DOMContentLoaded', () => {
     <!-- Ground -->
     <a-plane rotation="-90 0 0" width="500" height="500" color="#7BC8A4"></a-plane>
 
+    
   </a-scene>
+
 </body>
 </html>
-
-
